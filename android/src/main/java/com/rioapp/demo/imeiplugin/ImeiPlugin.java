@@ -10,6 +10,10 @@ import android.telephony.TelephonyManager;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
@@ -46,12 +50,29 @@ public class ImeiPlugin implements MethodCallHandler, PluginRegistry.RequestPerm
 
             if (ContextCompat.checkSelfPermission((activity), Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED){
                 TelephonyManager telephonyManager = (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    result.success( telephonyManager.getImei() );
-                else
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    int slot = telephonyManager.getPhoneCount();
+                    List<String> imeis = new ArrayList<String>();
+                    String imei = "unknow";
+                    if (slot > 1) {
+                        for (int i = 0; i < slot; i++) {
+                            String str = telephonyManager .getImei(slot);
+                            imeis.add(str);
+                        }
+                        if (imeis.size() > 0) {
+                            String rimei = imeis.get(0);
+                            if (null != rimei){
+                                imei = rimei;
+                            }
+                        }
+                        result.success(imei);
+                    }else {
+                        result.success( telephonyManager.getImei() );
+                    }
+                }
+                else {
                     result.success( telephonyManager.getDeviceId() );
-
+                }
             } else {
 
                 if (ssrpr && ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_PHONE_STATE) )
